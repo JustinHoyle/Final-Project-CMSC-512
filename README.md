@@ -1,6 +1,20 @@
 # Final-Project-CMSC-512---TBD
 Project topic TBD
 
+## Running the project with requirements
+python -m venv venv
+source venv/bin/activate  # macOS/Linux
+venv\Scripts\activate  # Windows
+pip install -r requirements.txt
+
+## Datasets
+There are currently two datasets, SentimentTwitterDatase.csv, and cleaned_tweets.csv. 
+- cleaned_tweets.csv will be the set used for any training purposes. Contains the fields ['id', 'user', 'text', 'clean_text'].
+- SentimentTwitterDatase.csv is the original set, but will be unused once cleaned.
+
+## What are stopwords?
+Stopwords are common words (like "the," "is," "in," "and") that don't carry much meaningful information in text analysis. It'll help speed up any training step from this point forward.
+
 # Project Timeline  
 
 ## Project Proposal (Due: **March 2nd**) – **10%**  
