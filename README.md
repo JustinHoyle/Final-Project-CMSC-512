@@ -11,6 +11,7 @@ pip install -r requirements.txt
 There are currently two datasets, SentimentTwitterDatase.csv, and cleaned_tweets.csv. 
 - cleaned_tweets.csv will be the set used for any training purposes. Contains the fields ['id', 'user', 'text', 'clean_text'].
 - SentimentTwitterDatase.csv is the original set, but will be unused once cleaned.
+- Download Sentiment dataset here: https://www.kaggle.com/datasets/kazanova/sentiment140
 
 ## What are stopwords?
 Stopwords are common words (like "the," "is," "in," "and") that don't carry much meaningful information in text analysis. It'll help speed up any training step from this point forward.
