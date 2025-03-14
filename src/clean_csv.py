@@ -19,12 +19,12 @@ def clean_csv(input_file, output_file):
 
 def clean_text(text):
     stop_words = set(stopwords.words('english'))
-    text = text.lower()  # Convert to lowercase
-    text = re.sub(r"http\S+|www\S+", "", text)  # Remove URLs
-    text = re.sub(r"@\w+", "", text)  # Remove mentions
-    text = re.sub(r"#\w+", "", text)  # Remove hashtags
-    text = re.sub(r"[^a-zA-Z\s]", "", text)  # Remove special characters & numbers
-    text = " ".join(word for word in text.split() if word not in stop_words)  # Remove stopwords
+    text = text.lower()
+    text = re.sub(r"http\S+|www\S+", "", text)
+    text = re.sub(r"@\w+", "", text)
+    text = re.sub(r"#\w+", "", text)
+    text = re.sub(r"[^a-zA-Z\s]", "", text)  
+    text = " ".join(word for word in text.split() if word not in stop_words)  
     return text
 
 

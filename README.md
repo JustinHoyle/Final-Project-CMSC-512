@@ -7,6 +7,9 @@ source venv/bin/activate  # macOS/Linux
 venv\Scripts\activate  # Windows
 pip install -r requirements.txt
 
+- This will download the english language model for the spacy NLP
+python -m spacy download en_core_web_trf
+
 ## Datasets
 There are currently two datasets, SentimentTwitterDatase.csv, and cleaned_tweets.csv. 
 - cleaned_tweets.csv will be the set used for any training purposes. Contains the fields ['id', 'user', 'text', 'clean_text'].
