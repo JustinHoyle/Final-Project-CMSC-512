@@ -30,10 +30,19 @@ def extract_pii(text):
         for match in matches:
             detected_pii.add(f"{label}: {match}")
 
-    print(", ".join(detected_pii) if detected_pii else "No PII Detected")
     return ", ".join(detected_pii) if detected_pii else "No PII Detected"
 
 
 df = pd.read_csv("cleaned_tweets.csv", names=['ids', 'user', 'text', 'clean_text'])
-df['pii'] = df['clean_text'].apply(extract_pii)
+pii_results = []
+total_rows = len(df)
+print(f"Processing {total_rows} rows...")
+for iter, text in enumerate(df['clean_text']):
+    pii_results.append(extract_pii(text))
+
+    # Print progress every 1000 rows
+    if (iter + 1) % 1000 == 0:
+        print(f"Processed {iter + 1}/{total_rows} rows...")
+
+df['pii'] = pii_results
 df.to_csv("pii_detected_tweets.csv", index=False)
