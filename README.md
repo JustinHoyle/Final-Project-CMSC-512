@@ -1,5 +1,5 @@
 # Final-Project-CMSC-512---TBD
-Project topic TBD
+This project aims to develop a Privacy Ranker that evaluates and ranks a users’ social media profile based on their privacy risk. Many users unknowingly expose Personally Identifiable Information (PII) on platforms such as Twitter, LinkedIn, and Instagram, leading to privacy leaks, identity theft, and more. The privacy ranker will analyze user-generated content and determine the likelihood of sensitive information being exposed and suggest privacy settings and actions to take for increased security.
 
 ## Running the project with requirements
 python -m venv venv  
