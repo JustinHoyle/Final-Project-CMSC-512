@@ -19,16 +19,27 @@ def clean_csv(input_file, output_file):
 
 def clean_text(text):
     stop_words = set(stopwords.words('english'))
-    text = text.lower()
-    text = re.sub(r"http\S+|www\S+", "", text)
-    text = re.sub(r"@\w+", "", text)
-    text = re.sub(r"#\w+", "", text)
-    text = re.sub(r"[^a-zA-Z\s]", "", text)  
+    text = text.lower()  # Convert to lowercase
+    text = re.sub(r"http\S+|www\S+", "", text)  # Remove URLs
+    text = re.sub(r"@\w+", "", text)  # Remove mentions
+    text = re.sub(r"#\w+", "", text)  # Remove hashtags
+    text = re.sub(r"[^a-zA-Z\s]", "", text)  # Remove special characters & numbers
     text = " ".join(word for word in text.split() if word not in stop_words)  
     return text
 
+# Cleanup for mentions since I'm not running that again for serveral hours
+def remove_mentions(input_name, output_name):
+    # Load the dataset
+    df = pd.read_csv(input_name)
 
+    # Function to check if a PERSON tag starts with '@'
+    def has_person_at_symbol(pii_text):
+        if pd.isna(pii_text):
+            return False
+        return any(tag.startswith("PERSON: @") for tag in pii_text.split(", "))
+    df_filtered = df[~df['pii'].apply(has_person_at_symbol)]
+    df_filtered.to_csv(output_name, index=False)
 
-input_csv = 'SentimentTwitterDataset.csv'
-output_csv = 'cleaned_tweets.csv'
-clean_csv(input_csv, output_csv)
+input_csv = 'pii_detected_tweets_unclean.csv'
+output_csv = 'pii_detected_tweets_unclean_no_mentions.csv'
+remove_mentions(input_csv, output_csv)

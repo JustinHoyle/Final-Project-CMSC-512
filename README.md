@@ -12,8 +12,8 @@ python -m spacy download en_core_web_trf
 
 ## Datasets
 There are currently two datasets, SentimentTwitterDatase.csv, and cleaned_tweets.csv. 
-- cleaned_tweets.csv will be the set used for any training purposes. Contains the fields ['id', 'user', 'text', 'clean_text'].
-- SentimentTwitterDatase.csv is the original set, but will be unused once cleaned.
+- pii_detected_tweets.csv will be the set used for any training purposes. Contains the fields ['id', 'user', 'text', 'pii'].
+- SentimentTwitterDatase.csv is the original set, but will be unused once processed.
 - Download Sentiment dataset here: https://www.kaggle.com/datasets/kazanova/sentiment140
 
 ## What are stopwords?
