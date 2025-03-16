@@ -2,9 +2,9 @@
 Project topic TBD
 
 ## Running the project with requirements
-python -m venv venv
-source venv/bin/activate  # macOS/Linux
-venv\Scripts\activate  # Windows
+python -m venv venv  
+source venv/bin/activate  # macOS/Linux  
+venv\Scripts\activate  # Windows    
 pip install -r requirements.txt
 
 - This will download the english language model for the spacy NLP
