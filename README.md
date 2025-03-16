@@ -7,7 +7,7 @@ source venv/bin/activate  # macOS/Linux
 venv\Scripts\activate  # Windows    
 pip install -r requirements.txt
 
-- This will download the english language model for the spacy NLP
+- This will download the english language model for the spacy NLP  
 python -m spacy download en_core_web_trf
 
 ## Datasets
