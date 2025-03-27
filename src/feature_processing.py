@@ -1,50 +1,46 @@
+# Step 3: Feature Engineering and Machine Learning (feature_processing.py)
 import pandas as pd
-from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import classification_report, confusion_matrix
 from sklearn.feature_extraction.text import TfidfVectorizer
+from imblearn.over_sampling import SMOTE
 from pathlib import Path
 import joblib
-from imblearn.over_sampling import SMOTE
-
 
 def process_for_ml(input_file):
+    """
+    Prepares the dataset for machine learning by feature engineering, applying TF-IDF, and training a classifier.
+    """
     df = pd.read_csv(input_file)
     unique_users = df['user'].unique()
     sampled_users = pd.Series(unique_users).sample(frac=0.1, random_state=42).tolist()
     df = df[df['user'].isin(sampled_users)]
 
-    print("One-hot encoding PII types...")
-    df['has_email'] = df['pii'].str.contains("EMAIL:", na=False).astype(int)
-    df['has_phone'] = df['pii'].str.contains("PHONE:", na=False).astype(int)
-    df['has_person'] = df['pii'].str.contains("PERSON:", na=False).astype(int)
-    df['has_org'] = df['pii'].str.contains("ORG:", na=False).astype(int)
-    df['has_gpe'] = df['pii'].str.contains("GPE:", na=False).astype(int)
-    df['pii_count'] = df[['has_email', 'has_phone', 'has_person', 'has_org', 'has_gpe']].sum(axis=1)
-    user_pii_summary = df.groupby('user')['pii_count'].sum().reset_index()
-    user_pii_summary.rename(columns={'pii_count': 'total_pii_count'}, inplace=True)
-    df = df.merge(user_pii_summary, on='user', how='left')
+    # One-hot encode PII types
+    pii_categories = ["EMAIL", "PHONE", "PERSON", "ORG", "GPE"]
+    for category in pii_categories:
+        df[f'has_{category.lower()}'] = df['pii'].str.contains(f"{category}:", na=False).astype(int)
+    df['pii_count'] = df[[f'has_{cat.lower()}' for cat in pii_categories]].sum(axis=1)
 
-    print("Calculating text length and word count...")
+    # Feature extraction: Text length and word count
     df['text_length'] = df['text'].astype(str).apply(len)
     df['word_count'] = df['text'].astype(str).apply(lambda x: len(x.split()))
 
-    print("Defining risk labels...")
-    df['risk_label'] = df[['has_email', 'has_phone', 'has_person', 'has_org', 'has_gpe']].sum(axis=1)
-    df['risk_label'] = df['risk_label'].apply(lambda x: 2 if x >= 2 else (1 if x == 1 else 0))
+    # Risk label: 0 (no PII), 1 (some PII), 2 (high PII)
+    df['risk_label'] = df['pii_count'].apply(lambda x: 2 if x >= 2 else (1 if x == 1 else 0))
 
-    print("Extracting text features with TF-IDF...")
-    vectorizer = TfidfVectorizer(max_features=1000)  # Limit to 1000 most important words
+    # Convert text to numerical features using TF-IDF
+    vectorizer = TfidfVectorizer(max_features=1000)
     X_text = vectorizer.fit_transform(df['text'])
 
-    print("Merging TF-IDF features with structured features...")
-    X_structured = df[['has_email', 'has_phone', 'has_person', 'has_org', 'has_gpe', 'text_length', 'word_count']].values
+    # Merge TF-IDF with structured features
+    X_structured = df[['text_length', 'word_count'] + [f'has_{cat.lower()}' for cat in pii_categories]].values
     X = pd.concat([pd.DataFrame(X_text.toarray()), pd.DataFrame(X_structured)], axis=1)
     y = df['risk_label']
 
-    print("Splitting data into train and test sets...")
+    # Train-test split and oversampling with SMOTE
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-
     smote = SMOTE(random_state=42)
     X_train_resampled, y_train_resampled = smote.fit_resample(X_train, y_train)
 
@@ -80,6 +76,7 @@ def process_for_ml(input_file):
     print("Predicting on the test set using the best model...")
     y_pred = best_rf_model.predict(X_test) """
 
+    # Train Random Forest model
     print("Training the Random Forest model with the best parameters...")
     model = RandomForestClassifier(
         max_depth=20, 
@@ -102,6 +99,7 @@ def process_for_ml(input_file):
     print("Confusion Matrix:")
     print(confusion_matrix(y_test, y_pred))
 
+    # Evaluate and save model
     df.to_csv(Path('csv/processed_pii_risk_data_with_ml.csv'), index=False)
     joblib.dump(model, Path('models/random_forest_model.pkl'))
     joblib.dump(vectorizer, Path('models/tfidf_vectorizer.pkl'))
