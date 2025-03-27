@@ -20,7 +20,7 @@ There are currently two datasets, SentimentTwitterDatase.csv, and cleaned_tweets
 Stopwords are common words (like "the," "is," "in," "and") that don't carry much meaningful information in text analysis. It'll help speed up any training step from this point forward.
 
 
-### Project Pipeline
+## Project Pipeline
 
 1.  **Data Cleaning & Preprocessing (`clean_csv.py`)**
 
