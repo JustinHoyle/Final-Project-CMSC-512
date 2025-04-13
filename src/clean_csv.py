@@ -47,6 +47,7 @@ def remove_mentions(input_name, output_name):
     df_filtered = df[~df['pii'].apply(has_person_at_symbol)]
     df_filtered.to_csv(output_name, index=False)
 
-input_csv = 'pii_detected_tweets_unclean.csv'
-output_csv = 'pii_detected_tweets_unclean_no_mentions.csv'
-remove_mentions(input_csv, output_csv)
+input_csv = 'SentimentTwitterDataset.csv'
+output_csv = 'cleaned_tweets.csv'
+clean_csv(input_csv, output_csv)
+remove_mentions(output_csv, output_csv)

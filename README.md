@@ -19,6 +19,8 @@ There are currently two datasets, SentimentTwitterDatase.csv, and cleaned_tweets
 ## What are stopwords?
 Stopwords are common words (like "the," "is," "in," "and") that don't carry much meaningful information in text analysis. It'll help speed up any training step from this point forward.
 
+## NER Model
+https://huggingface.co/Jean-Baptiste/roberta-large-ner-english
 
 ## Project Pipeline
 
@@ -34,11 +36,11 @@ Stopwords are common words (like "the," "is," "in," "and") that don't carry much
 
 2.  **Named Entity Recognition (NER) for PII Detection (`named_entity_recognition.py`)**
 
-    -   Uses spaCy NLP to detect and extract Personally Identifiable Information (PII).
+    -   Uses a hugging face NLP to detect and extract Personally Identifiable Information (PII).
 
     -   Identifies key entities:
 
-        -   `EMAIL`, `PHONE`, `PERSON`, `ORG` (Organization), `GPE` (Geopolitical Entity).
+        -   `PERSON`, `ORG` (Organization), `LOC` (Location), `MISC`.
 
     -   Outputs a dataset with PII annotations for feature extraction and model training.
 
