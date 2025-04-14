@@ -48,6 +48,6 @@ def remove_mentions(input_name, output_name):
     df_filtered.to_csv(output_name, index=False)
 
 input_csv = 'SentimentTwitterDataset.csv'
-output_csv = 'cleaned_tweets.csv'
-clean_csv(input_csv, output_csv)
+output_csv = 'csv/cleaned_tweets.csv'
+#clean_csv(input_csv, output_csv)
 remove_mentions(output_csv, output_csv)

@@ -22,6 +22,8 @@ Stopwords are common words (like "the," "is," "in," "and") that don't carry much
 ## NER Model
 https://huggingface.co/Jean-Baptiste/roberta-large-ner-english
 
+## SLURM
+
 ## Project Pipeline
 
 1.  **Data Cleaning & Preprocessing (`clean_csv.py`)**
