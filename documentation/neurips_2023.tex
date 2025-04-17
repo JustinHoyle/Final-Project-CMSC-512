@@ -51,27 +51,18 @@ Data cleaning is implemented in \texttt{clean\_csv.py}. The process consists of:
     \item \textbf{Data Quality Assurance:} After renaming the remaining columns to \texttt{ids}, \texttt{user}, and \texttt{text}, empty entries and duplicate tweets are removed.
     \item \textbf{Text Cleaning:} A custom function \texttt{clean\_text()} converts text to lowercase and uses regular expressions to strip URLs, mentions, hashtags, punctuation, and common stopwords (via NLTK).
 \end{itemize}
-An additional helper function, \texttt{remove\_mentions()}, further filters the data by removing rows where PII data contains user mentions, thus reducing false positives in later stages.
+
+\subsection{Computational Infrastructure}
+All model training and evaluation tasks were performed using the Apollo cluster at the Virginia Commonwealth University (VCU) High Performance Research Computing (HPRC) facility. Apollo is designed to support research using data requiring compliance with federal security and privacy standards. It consists of 18 compute nodes, 604 CPUs, 5.9 TB of RAM, 3 PB of high-performance Lustre file system storage, and Nvidia P100 GPUs connected via 54 Gb/second InfiniBand networking. This secure and robust computing environment enabled the efficient training of transformer-based models, including DistilBERT, on large text datasets.
 
 \subsection{Named Entity Recognition for PII Extraction}
-The extraction of PII is handled in \texttt{named\_entity\_recognition.py}. The script performs two main tasks:
-\begin{itemize}
-    \item \textbf{NER with spaCy:} A transformer-based model (\texttt{en\_core\_web\_trf}) is loaded to detect named entities such as \texttt{PERSON}, \texttt{GPE}, and \texttt{ORG}.
-    \item \textbf{Regular Expressions:} In addition to NER, regex patterns are defined to capture emails and phone numbers.
-\end{itemize}
-The function \texttt{extract\_pii()} applies both methods to each tweet. Detected entities and regex matches are merged into a single string per tweet and the results are saved into a new CSV file. This dual approach ensures a broader and more accurate identification of potential PII.
+The extraction of PII is implemented in \texttt{named\_entity\_recognition.py} using Hugging Face's \texttt{transformers} library. Specifically, the script leverages the \texttt{Jean-Baptiste/roberta-large-ner-english} model and its associated tokenizer to create a NER pipeline. This pipeline, which utilizes GPU acceleration when available, processes text to identify entities such as \texttt{PER}, \texttt{ORG}, \texttt{LOC}, and \texttt{MISC}. In addition, regular expressions are applied to capture emails and phone numbers. The results from the Hugging Face pipeline and regex matching are combined into a single output per tweet.
 
 \subsection{Feature Engineering and Machine Learning}
-The \texttt{feature\_processing.py} script outlines the feature engineering and model training process:
-\begin{itemize}
-    \item \textbf{Sampling:} To manage computational load, the dataset is filtered to include a random sample (approximately 10\% of unique users).
-    \item \textbf{One-Hot Encoding:} For each PII category (EMAIL, PHONE, PERSON, ORG, GPE), binary indicators are created to signal the presence of that type of PII.
-    \item \textbf{Additional Features:} The script computes text length and word count as additional features.
-    \item \textbf{Risk Labeling:} Based on the count of PII indicators, each tweet is assigned a risk label: 0 (no PII), 1 (some PII), or 2 (high risk if two or more types are detected).
-    \item \textbf{TF-IDF Vectorization:} The raw text is transformed into numerical features using a TF-IDF vectorizer with a maximum of 1000 features.
-    \item \textbf{Feature Concatenation:} The TF-IDF features are combined with the structured features (one-hot encodings and textual metrics) into a single feature matrix.
-\end{itemize}
-To address class imbalance, the Synthetic Minority Oversampling Technique (SMOTE) is applied. The data is then split into training and test sets (80/20 split), and a Random Forest classifier is trained using hyperparameters such as a maximum depth of 20, 200 trees, and balanced class weights.
+Two modeling approaches are implemented in this project. The first is a classical machine learning pipeline using a Random Forest classifier. In this approach, features are engineered by combining TF-IDF vectorization of the raw text with structured features such as the presence of PII entities (e.g., \texttt{has\_person}, \texttt{has\_org}, \texttt{has\_gpe}), text length, and word count. The Random Forest model is trained on these concatenated features after addressing class imbalance with SMOTE.
+
+\subsubsection{Transformer-Based Model (DistilBERT)}
+In addition, a transformer-based model using DistilBERT is implemented in \texttt{feature\_processing.py}. This approach involves tokenizing the text data, preparing datasets using Hugging Face's \texttt{Dataset} library, and training a sequence classification model with Hugging Face’s \texttt{Trainer}. The training process includes dataset preparation, tokenization, and evaluation using accuracy metrics. The final model is saved for future inference.
 
 \subsection{Model Training and Evaluation}
 The Random Forest model, as configured in \texttt{feature\_processing.py}, is trained on the oversampled training data. Evaluation is performed using:
@@ -82,7 +73,7 @@ The Random Forest model, as configured in \texttt{feature\_processing.py}, is tr
 Once evaluated, the trained model and the TF-IDF vectorizer are persisted using \texttt{joblib}, making them available for future predictions.
 
 \subsection{Model Testing}
-A separate script, \texttt{test\_model.py}, is responsible for loading the saved model and vectorizer. It demonstrates how new data can be preprocessed and fed into the model to predict privacy risk labels. The script prepares the new data by computing the same features as used during training and then outputs the predicted risk scores.
+A separate script, \texttt{test\_model.py}, is responsible for loading the saved Random Forest model and TF-IDF vectorizer. The script applies the same preprocessing steps as used during training to prepare new data, and then demonstrates inference by predicting privacy risk labels. Additionally, it evaluates the model's performance using a classification report that summarizes precision, recall, and F1-score.
 
 \section{Experimental Setup and Results}
 The experiments were conducted on a standard workstation. Key aspects include:
@@ -122,15 +113,16 @@ Our implementation demonstrates a systematic approach to privacy risk assessment
 The modular design, with distinct scripts for cleaning, extraction, feature processing, and model testing, facilitates easier debugging and future enhancements.
 
 \section{Conclusion and Future Work}
-This paper presented an end-to-end framework for assessing privacy risks in social media profiles by detecting and classifying PII. The Privacy Ranker system combines robust data preprocessing, advanced PII extraction techniques, comprehensive feature engineering, and machine learning to generate actionable risk scores.
+This paper presented an end-to-end framework for assessing privacy risks in social media profiles by detecting and classifying PII. The Privacy Ranker system integrates robust data preprocessing, advanced PII extraction using Hugging Face’s transformers, comprehensive feature engineering, and both classical and transformer-based machine learning approaches to generate actionable risk scores.
 
 Future work may include:
 \begin{itemize}
     \item Integrating more advanced deep learning models for both text representation and risk prediction.
     \item Expanding the dataset to include additional social media platforms and non-English languages.
     \item Conducting user studies to further validate the practical utility of the Privacy Ranker in real-world scenarios.
+    \item Exploring the adaptability of the system to various deployment constraints by leveraging multiple modeling paradigms.
 \end{itemize}
-Overall, our work lays the groundwork for automated privacy risk assessment tools that can help users take proactive measures to protect their personal information.
+Overall, our work demonstrates the potential of combining classical machine learning and transformer-based approaches to create a flexible and robust privacy risk assessment tool.
 
 \section{Code Repository}
 The complete codebase for this project is available at:
