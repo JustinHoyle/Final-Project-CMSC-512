@@ -74,13 +74,13 @@ The model’s performance is evaluated using the following metrics:
 
     -   Trains a machine learning classifier (e.g., Random Forest or LightGBM) to predict privacy risk labels:
 
-    -   0 = Low (no PII)
+        -   0 = Low (no PII)
 
-    -   1 = Medium (some PII)
+        -   1 = Medium (some PII)
 
-    -   2 = High (multiple types of PII)
+        -   2 = High (multiple types of PII)
 
-Saves the model and vectorizer for later use.
+    -   Saves the model and vectorizer for later use.
 
 4.  **Training & Testing the Machine Learning Model (`test_model.py`)**
 
