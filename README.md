@@ -25,7 +25,7 @@ https://huggingface.co/Jean-Baptiste/roberta-large-ner-english
 ## SLURM
 This project can be executed on a High-Performance Computing (HPC) cluster using [Slurm](https://slurm.schedmd.com/documentation.html), a workload manager for job scheduling. Slurm handles job submission and resource allocation (CPU, GPU, memory) efficiently across compute nodes.
 
-### Machine Learning Models
+## Machine Learning Models
 
 - **Random Forest Classifier**: Used for classification of risk levels based on textual and structured features.
 - **Jean-Baptiste/roberta-large-ner-english**: Hugging Face NER model used to extract PII entities.
@@ -33,7 +33,7 @@ This project can be executed on a High-Performance Computing (HPC) cluster using
 
 The output of NER is transformed into structured binary features (e.g., `has_per`, `has_org`) for ML classification.
 
-### Model Evaluation
+## Model Evaluation
 The model’s performance is evaluated using the following metrics:
 
 - **Accuracy**: Percentage of correctly predicted labels.
