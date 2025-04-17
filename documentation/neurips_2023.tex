@@ -50,30 +50,28 @@ Data cleaning is implemented in \texttt{clean\_csv.py}. The process consists of:
     \item \textbf{Column Reduction:} The raw CSV file contains several columns; the script drops columns with indices 0, 2, and 3, retaining only the tweet ID, user identifier, and tweet text.
     \item \textbf{Data Quality Assurance:} After renaming the remaining columns to \texttt{ids}, \texttt{user}, and \texttt{text}, empty entries and duplicate tweets are removed.
     \item \textbf{Text Cleaning:} A custom function \texttt{clean\_text()} converts text to lowercase and uses regular expressions to strip URLs, mentions, hashtags, punctuation, and common stopwords (via NLTK).
+    \item \textbf{Mention Filtering:} The \texttt{remove\_mentions()} function filters out rows where PII tags include mentions (e.g., \texttt{PERSON: @} tags) and writes the filtered data to the output CSV.
 \end{itemize}
 
 \subsection{Computational Infrastructure}
-All model training and evaluation tasks were performed using the Apollo cluster at the Virginia Commonwealth University (VCU) High Performance Research Computing (HPRC) facility. Apollo is designed to support research using data requiring compliance with federal security and privacy standards. It consists of 18 compute nodes, 604 CPUs, 5.9 TB of RAM, 3 PB of high-performance Lustre file system storage, and Nvidia P100 GPUs connected via 54 Gb/second InfiniBand networking. This secure and robust computing environment enabled the efficient training of transformer-based models, including DistilBERT, on large text datasets.
+The NER extraction and model training steps leverage the Apollo cluster at Virginia Commonwealth University’s High Performance Research Computing (HPRC) facility. The provided \texttt{NER\_slurm.sh} script dispatches the NER pipeline to the cluster with a Slurm job requesting 1 GPU, 4 CPUs, and 32 GB of memory, logging output to \texttt{hf\_ner\_\%j.out}. Sentence embeddings generation and Random Forest training were performed on nodes equipped with Nvidia P100 GPUs and high-memory configurations. The Apollo cluster comprises 18 compute nodes with 604 CPUs, 5.9 TB of RAM, 3 PB of Lustre storage, and 54 Gb/s InfiniBand interconnect.
 
 \subsection{Named Entity Recognition for PII Extraction}
-The extraction of PII is implemented in \texttt{named\_entity\_recognition.py} using Hugging Face's \texttt{transformers} library. Specifically, the script leverages the \texttt{Jean-Baptiste/roberta-large-ner-english} model and its associated tokenizer to create a NER pipeline. This pipeline, which utilizes GPU acceleration when available, processes text to identify entities such as \texttt{PER}, \texttt{ORG}, \texttt{LOC}, and \texttt{MISC}. In addition, regular expressions are applied to capture emails and phone numbers. The results from the Hugging Face pipeline and regex matching are combined into a single output per tweet.
+The extraction of PII is implemented in \texttt{named\_entity\_recognition.py} using Hugging Face’s \texttt{transformers} library. The script loads the \texttt{Jean-Baptiste/roberta-large-ner-english} model and tokenizer into a grouped-entity NER pipeline. Each tweet is processed to detect entities in the categories \texttt{PER}, \texttt{ORG}, \texttt{LOC}, and \texttt{MISC}, producing a comma-separated list of PII tags per tweet. The results are written to \texttt{pii\_detected\_tweets.csv}. GPU acceleration is available when running via the \texttt{NER\_slurm.sh} script.
 
 \subsection{Feature Engineering and Machine Learning}
-Two modeling approaches are implemented in this project. The first is a classical machine learning pipeline using a Random Forest classifier. In this approach, features are engineered by combining TF-IDF vectorization of the raw text with structured features such as the presence of PII entities (e.g., \texttt{has\_person}, \texttt{has\_org}, \texttt{has\_gpe}), text length, and word count. The Random Forest model is trained on these concatenated features after addressing class imbalance with SMOTE.
-
-\subsubsection{Transformer-Based Model (DistilBERT)}
-In addition, a transformer-based model using DistilBERT is implemented in \texttt{feature\_processing.py}. This approach involves tokenizing the text data, preparing datasets using Hugging Face's \texttt{Dataset} library, and training a sequence classification model with Hugging Face’s \texttt{Trainer}. The training process includes dataset preparation, tokenization, and evaluation using accuracy metrics. The final model is saved for future inference.
+The project implements a classical machine learning pipeline centered on a Random Forest classifier. Text representations are generated using sentence embeddings from the \texttt{all-MiniLM-L6-v2} model via the \texttt{SentenceTransformer} library. Structured features include binary indicators for PII categories (\texttt{has\_per}, \texttt{has\_org}, \texttt{has\_loc}, \texttt{has\_misc}), \texttt{text\_length}, and \texttt{word\_count}. The text embeddings and structured features are concatenated to form the final feature matrix. After oversampling the minority classes with SMOTE, a Random Forest model (max depth 20, 200 estimators, balanced class weights) is trained on the resampled data.
 
 \subsection{Model Training and Evaluation}
-The Random Forest model, as configured in \texttt{feature\_processing.py}, is trained on the oversampled training data. Evaluation is performed using:
+The Random Forest classifier is trained on the SMOTE-resampled data. Evaluation uses:
 \begin{itemize}
-    \item \textbf{Classification Report:} Metrics such as precision, recall, and F1-score are calculated to assess model performance.
-    \item \textbf{Confusion Matrix:} This provides a visual insight into the classification accuracy across different risk levels.
+    \item \textbf{Classification Report:} Precision, recall, and F1-score metrics.
+    \item \textbf{Confusion Matrix:} Visualization of true versus predicted risk labels.
 \end{itemize}
-Once evaluated, the trained model and the TF-IDF vectorizer are persisted using \texttt{joblib}, making them available for future predictions.
+After evaluation, both the trained Random Forest model and the sentence embedding encoder are serialized via \texttt{joblib} (to \texttt{random\_forest\_model\_embed.pkl} and \texttt{sentence\_transformer\_embedder.pkl}, respectively).
 
 \subsection{Model Testing}
-A separate script, \texttt{test\_model.py}, is responsible for loading the saved Random Forest model and TF-IDF vectorizer. The script applies the same preprocessing steps as used during training to prepare new data, and then demonstrates inference by predicting privacy risk labels. Additionally, it evaluates the model's performance using a classification report that summarizes precision, recall, and F1-score.
+The \texttt{test\_model.py} script loads the serialized Random Forest model and the saved vectorizer. For each new input, it computes structured features (\texttt{has\_email}, \texttt{has\_phone}, \texttt{has\_person}, \texttt{has\_org}, \texttt{has\_gpe}, \texttt{text\_length}, \texttt{word\_count}) and applies the vectorizer to encode the raw text. The script concatenates the resulting text vectors with structured features to form the test feature matrix, performs inference to predict risk labels, and optionally generates a classification report comparing predictions to true labels.
 
 \section{Experimental Setup and Results}
 The experiments were conducted on a standard workstation. Key aspects include:
@@ -98,14 +96,10 @@ The experiments were conducted on a standard workstation. Key aspects include:
     \label{fig:confusion}
 \end{figure}
 
-Figure \ref{fig:feature_importance} shows that the presence of a \texttt{PERSON} entity (\texttt{has\_person}) is the most significant contributor to the model’s decision-making process, followed by \texttt{has\_org}, \texttt{has\_gpe}, and text-based metrics such as \texttt{text\_length} and \texttt{word\_count}.
-
-After training and evaluation, we generated a confusion matrix to visualize the classification performance. Figure \ref{fig:confusion} presents the true versus predicted risk labels.
-
 \section{Discussion}
 Our implementation demonstrates a systematic approach to privacy risk assessment:
 \begin{itemize}
-    \item The dual approach for PII extraction—combining spaCy's transformer-based NER with regular expressions—ensures that a wide variety of PII is captured.
+    \item The dual approach for PII extraction—combining Hugging Face’s transformer-based NER with regular expressions—ensures that a wide variety of PII is captured.
     \item Data cleaning and preprocessing steps are essential to reduce noise and improve the quality of input data.
     \item Feature engineering, which includes both text-based features and structured indicators, provides a comprehensive representation of the data.
     \item The use of SMOTE to mitigate class imbalance significantly contributes to the robustness of the trained Random Forest classifier.
@@ -113,7 +107,7 @@ Our implementation demonstrates a systematic approach to privacy risk assessment
 The modular design, with distinct scripts for cleaning, extraction, feature processing, and model testing, facilitates easier debugging and future enhancements.
 
 \section{Conclusion and Future Work}
-This paper presented an end-to-end framework for assessing privacy risks in social media profiles by detecting and classifying PII. The Privacy Ranker system integrates robust data preprocessing, advanced PII extraction using Hugging Face’s transformers, comprehensive feature engineering, and both classical and transformer-based machine learning approaches to generate actionable risk scores.
+This paper presented an end-to-end framework for assessing privacy risks in social media profiles by detecting and classifying PII. The Privacy Ranker system integrates robust data preprocessing, advanced PII extraction using Hugging Face’s transformers, comprehensive feature engineering, and a classical Random Forest model to generate actionable risk scores.
 
 Future work may include:
 \begin{itemize}
@@ -122,7 +116,6 @@ Future work may include:
     \item Conducting user studies to further validate the practical utility of the Privacy Ranker in real-world scenarios.
     \item Exploring the adaptability of the system to various deployment constraints by leveraging multiple modeling paradigms.
 \end{itemize}
-Overall, our work demonstrates the potential of combining classical machine learning and transformer-based approaches to create a flexible and robust privacy risk assessment tool.
 
 \section{Code Repository}
 The complete codebase for this project is available at:
@@ -130,21 +123,21 @@ The complete codebase for this project is available at:
 
 The repository includes:
 \begin{itemize}
-    \item \texttt{clean\_csv.py}: Implements CSV parsing, text cleaning, and removal of irrelevant mentions.
-    \item \texttt{named\_entity\_recognition.py}: Extracts PII using both spaCy NER and regex patterns.
-    \item \texttt{feature\_processing.py}: Handles feature engineering, TF-IDF vectorization, model training, and evaluation.
-    \item \texttt{test\_model.py}: Demonstrates how to load the trained model and vectorizer to predict privacy risk on new data.
-    \item Additional scripts and notebooks for exploratory data analysis.
+    \item \texttt{clean\_csv.py}: Cleans raw CSV, applies text preprocessing, and filters out PII mentions with \texttt{remove\_mentions()}.
+    \item \texttt{named\_entity\_recognition.py}: Performs NER-based PII extraction via a Hugging Face pipeline.
+    \item \texttt{NER\_slurm.sh}: Slurm job script to run the NER pipeline on a GPU-enabled HPC node.
+    \item \texttt{feature\_processing.py}: Generates sentence embeddings, assembles structured features, applies SMOTE, trains a Random Forest classifier, and saves the model and embedder.
+    \item \texttt{test\_model.py}: Loads the saved model and vectorizer, computes features for new data, and outputs risk predictions and evaluation metrics.
+    \item Serialized artifacts in \texttt{models/}: \texttt{random\_forest\_model\_embed.pkl}, \texttt{sentence\_transformer\_embedder.pkl}, and \texttt{tfidf\_vectorizer.pkl}.
+    \item Additional exploratory notebooks and utility scripts.
 \end{itemize}
-
-\section{Acknowledgements}
-We would like to thank our advisors and colleagues at Virginia Commonwealth University for their invaluable support and feedback throughout this project.
 
 \section*{References}
 \begin{itemize}
     \item \texttt{pandas} documentation: \url{https://pandas.pydata.org/}
     \item \texttt{nltk} documentation: \url{https://www.nltk.org/}
-    \item \texttt{spaCy} documentation: \url{https://spacy.io/}
+    \item \texttt{transformers} library: \url{https://huggingface.co/docs/transformers/}
+    \item \texttt{sentence-transformers} documentation: \url{https://www.sbert.net/}
     \item \texttt{scikit-learn} documentation: \url{https://scikit-learn.org/}
     \item \texttt{imbalanced-learn} (SMOTE): \url{https://imbalanced-learn.org/}
 \end{itemize}
