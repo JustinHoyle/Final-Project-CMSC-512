@@ -36,7 +36,7 @@ def main():
     model, vectorizer = load_model_and_vectorizer(model_path, vectorizer_path)
     new_data = [
         {"user": "user1", "text": "My email is john.doe@example.com", "pii": "EMAIL:john.doe@example.com"},
-        {"user": "user2", "text": "I live in Virginia", "pii": "GPE:Virginia"},
+        {"user": "user2", "text": "I live in Virginia, my name is Jane", "pii": "GPE:Virginia,PER:Jane"},
     ]
     X_new = prepare_data_for_testing(new_data, vectorizer)
     y_pred = make_predictions(model, X_new)
