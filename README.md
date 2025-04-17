@@ -29,7 +29,7 @@ This project can be executed on a High-Performance Computing (HPC) cluster using
 
 - **Random Forest Classifier**: Used for classification of risk levels based on textual and structured features.
 - **Jean-Baptiste/roberta-large-ner-english**: Hugging Face NER model used to extract PII entities.
-- **SentenceTransformer ('all-MiniLM-L6-v2')**: Used as an alternative to TF-IDF for embedding text into semantic space (optional model).
+- **SentenceTransformer ('all-MiniLM-L6-v2')**: Used as an alternative to TF-IDF for embedding text into semantic space.
 
 The output of NER is transformed into structured binary features (e.g., `has_per`, `has_org`) for ML classification.
 
