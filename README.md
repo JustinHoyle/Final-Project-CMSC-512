@@ -97,7 +97,7 @@ The model’s performance is evaluated using the following metrics:
 
 # Project Timeline  
 
-~~## Project Proposal (Due: **March 2nd**) – **10%**  ~~
+## ~~ Project Proposal (Due: **March 2nd**) – **10%**  ~~
 Answer the following questions:  
 - What is the problem you are solving?  
 - What data will you use? (How will you obtain it?)  
@@ -108,7 +108,7 @@ Answer the following questions:
 
 ---
 
-~~## Project Milestone Report (Due: **March 31st**) – **15%**  ~~
+## ~~ Project Milestone Report (Due: **March 31st**) – **15%**  ~~
 - **Length**: 4-6 pages in LaTeX (or equivalent in MS Word/Google Docs).  
 - **File Format**: Single `.zip` file containing:  
   - PDF of the report  
