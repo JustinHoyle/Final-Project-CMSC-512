@@ -7,14 +7,14 @@ source venv/bin/activate  # macOS/Linux
 venv\Scripts\activate  # Windows    
 pip install -r requirements.txt
 
-- This will download the english language model for the spacy NLP  
-python -m spacy download en_core_web_trf
-
 ## Datasets
-There are currently two datasets, SentimentTwitterDatase.csv, and cleaned_tweets.csv. 
-- pii_detected_tweets.csv will be the set used for any training purposes. Contains the fields ['id', 'user', 'text', 'pii'].
-- SentimentTwitterDatase.csv is the original set, but will be unused once processed.
-- Download Sentiment dataset here: https://www.kaggle.com/datasets/kazanova/sentiment140
+This project primarily uses a modified version of the Sentiment140 Twitter Dataset, which contains 1.6 million tweets with basic metadata.
+- SentimentTwitterDataset.csv
+    The original dataset, containing raw tweets. This file is cleaned and processed using clean_csv.py and then passed through the PII extraction pipeline.
+- pii_detected_tweets.csv
+    The core dataset used for feature engineering and model training. It includes the fields:
+    ['ids', 'user', 'text', 'pii']
+    where pii contains extracted named entities (e.g., PER: John, ORG: Microsoft) from the Hugging Face NER model (Jean-Baptiste/roberta-large-ner-english).
 
 ## What are stopwords?
 Stopwords are common words (like "the," "is," "in," "and") that don't carry much meaningful information in text analysis. It'll help speed up any training step from this point forward.
@@ -54,42 +54,50 @@ The model’s performance is evaluated using the following metrics:
 
 2.  **Named Entity Recognition (NER) for PII Detection (`named_entity_recognition.py`)**
 
-    -   Uses a hugging face NLP to detect and extract Personally Identifiable Information (PII).
+    -   Applies the Hugging Face model Jean-Baptiste/roberta-large-ner-english to detect PII.
 
-    -   Identifies key entities:
+    -   Identifies and labels key entities such as: PER (Person), ORG (Organization), LOC (Location), MISC.
 
-        -   `PERSON`, `ORG` (Organization), `LOC` (Location), `MISC`.
-
-    -   Outputs a dataset with PII annotations for feature extraction and model training.
+    -   Outputs an annotated CSV (pii_detected_tweets.csv) containing extracted PII information for each text entry.
 
 3.  **Feature Engineering (`feature_processing.py`)**
 
-    -   Converts textual and structured PII data into numerical features.
+    -   Encodes presence of detected entity types as binary structured features (e.g., has_per, has_org).
 
-    -   Uses TF-IDF (Term Frequency-Inverse Document Frequency) to transform text.
+    -   Adds linguistic features such as text length and word count.
 
-    -   Generates additional structured features:
+    -   Transforms text data using Sentence embeddings with sentence-transformers (all-MiniLM-L6-v2).
 
-        -   Presence of different PII types (binary values).
+    -   Merges structured and text-based features.
 
-        -   Text length and word count.
+    -   Balances class distribution with SMOTE oversampling.
 
-    -   Outputs a structured dataset for machine learning model training.
+    -   Trains a machine learning classifier (e.g., Random Forest or LightGBM) to predict privacy risk labels:
+
+    -   0 = Low (no PII)
+
+    -   1 = Medium (some PII)
+
+    -   2 = High (multiple types of PII)
+
+Saves the model and vectorizer for later use.
 
 4.  **Training & Testing the Machine Learning Model (`test_model.py`)**
 
-    -   Loads the trained Random Forest model and TF-IDF vectorizer.
+    -   Loads the trained model and embedder.
 
-    -   Processes new input text to extract PII-based features.
+    -   Accepts new input text or a dataset (e.g., scraped Mastodon toots).
 
-    -   Predicts the privacy risk level of a user's profile.
+    -   Repeats feature extraction and inference pipeline.
 
-    -   Outputs risk labels that can be used for privacy recommendations.
+    -   Outputs risk level predictions and classification confidence scores.
+
+    -   Prints a classification report and confusion matrix for evaluation (if ground-truth labels exist).
 
 
 # Project Timeline  
 
-## Project Proposal (Due: **March 2nd**) – **10%**  
+~~## Project Proposal (Due: **March 2nd**) – **10%**  ~~
 Answer the following questions:  
 - What is the problem you are solving?  
 - What data will you use? (How will you obtain it?)  
@@ -100,7 +108,7 @@ Answer the following questions:
 
 ---
 
-## Project Milestone Report (Due: **March 31st**) – **15%**  
+~~## Project Milestone Report (Due: **March 31st**) – **15%**  ~~
 - **Length**: 4-6 pages in LaTeX (or equivalent in MS Word/Google Docs).  
 - **File Format**: Single `.zip` file containing:  
   - PDF of the report  
