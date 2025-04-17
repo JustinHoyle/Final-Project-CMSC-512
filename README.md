@@ -23,6 +23,22 @@ Stopwords are common words (like "the," "is," "in," "and") that don't carry much
 https://huggingface.co/Jean-Baptiste/roberta-large-ner-english
 
 ## SLURM
+This project can be executed on a High-Performance Computing (HPC) cluster using [Slurm](https://slurm.schedmd.com/documentation.html), a workload manager for job scheduling. Slurm handles job submission and resource allocation (CPU, GPU, memory) efficiently across compute nodes.
+
+### Machine Learning Models
+
+- **Random Forest Classifier**: Used for classification of risk levels based on textual and structured features.
+- **Jean-Baptiste/roberta-large-ner-english**: Hugging Face NER model used to extract PII entities.
+- **SentenceTransformer ('all-MiniLM-L6-v2')**: Used as an alternative to TF-IDF for embedding text into semantic space (optional model).
+
+The output of NER is transformed into structured binary features (e.g., `has_per`, `has_org`) for ML classification.
+
+### Model Evaluation
+The model’s performance is evaluated using the following metrics:
+
+- **Accuracy**: Percentage of correctly predicted labels.
+- **Precision/Recall/F1-Score**: Assesses balance between false positives and false negatives for each class.
+- **Confusion Matrix**: Visual breakdown of predictions vs actual labels.
 
 ## Project Pipeline
 
